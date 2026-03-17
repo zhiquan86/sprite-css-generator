@@ -1,23 +1,24 @@
-# PSD 图层坐标导出工具
+# PSD Sprite CSS Generator
 
-将 PSD 雪碧图中每个图层的位置和尺寸，自动导出为 CSS `background-position` 样式文件。
+将 PSD 雪碧图中每个图层的位置和尺寸，自动导出为 CSS / SCSS / WXSS / JSON 样式文件。
+
+## 在线使用
+
+**无需安装，直接打开浏览器使用：**
+
+👉 **https://zhiquan86.github.io/sprite-css-generator/**
 
 ---
 
-## 环境要求
+## 本地运行
 
-- Node.js 14 及以上
-- 现代浏览器（Chrome / Safari / Edge）
+如需本地开发或离线使用：
 
----
-
-## 安装
-
-**1. 克隆或下载项目**
+**1. 克隆项目**
 
 ```bash
-git clone <项目地址>
-cd <项目目录>
+git clone https://github.com/zhiquan86/sprite-css-generator.git
+cd sprite-css-generator
 ```
 
 **2. 安装依赖**
@@ -26,23 +27,20 @@ cd <项目目录>
 npm install
 ```
 
-**3. 启动本地服务器**
+**3. 启动开发服务器**
 
 ```bash
-# 使用 Python（推荐，无需额外安装）
-python3 -m http.server 8765
-
-# 或使用 Node.js
-npx serve .
+npm run dev
 ```
 
-**4. 打开浏览器访问**
+浏览器访问 `http://localhost:5173`
 
-```
-http://localhost:8765
-```
+**4. 构建产出单文件**
 
-> 注意：必须通过 HTTP 服务器访问，不能直接双击打开 `index.html`，否则本地文件加载会被浏览器安全策略拦截。
+```bash
+npm run build
+# 产出 dist/index.html，可离线使用，无需服务器
+```
 
 ---
 
@@ -50,13 +48,11 @@ http://localhost:8765
 
 ### 第一步：上传 PSD 文件
 
-- 将 PSD 文件**拖拽**到上传区域，或点击上传区域**选择文件**
+- 将 `.psd` / `.psb` 文件**拖拽**到上传区域，或点击选择
+- 支持同时上传多个文件批量处理
 - 上传成功后显示文件名和大小
-- 如需更换文件，点击「重新选择文件」
 
 ### 第二步：配置参数
-
-上传成功后，配置面板自动展开，共有四个参数：
 
 | 参数 | 说明 | 默认值 |
 |------|------|--------|
@@ -67,13 +63,11 @@ http://localhost:8765
 
 #### 图层范围说明
 
-- **所有图层（含组内）**：递归导出所有图层，包括图层组内的子图层，自动跳过隐藏图层
-- **仅可见图层**：同上，仅导出当前可见的图层
-- **仅顶层图层**：只导出 PSD 最顶层的图层，不进入图层组内部
+- **所有图层（含组内）**：递归导出所有图层，自动跳过隐藏图层
+- **仅可见图层**：只导出当前可见图层
+- **仅顶层图层**：只导出 PSD 最顶层，不进入图层组
 
 #### 除数基数说明
-
-像素坐标值会除以基数，得到最终输出数值：
 
 ```
 输出值 = 原始像素值 ÷ 基数
@@ -81,38 +75,25 @@ http://localhost:8765
 
 | 设计稿类型 | 建议基数 |
 |-----------|---------|
-| Web 1x 稿 | `1`（单位用 px）|
-| 移动端 750px 稿 | `100`（单位用 rem，1rem = 100px）|
+| Web 1x 稿 | `1`（单位 px）|
+| 移动端 750px 稿 | `100`（单位 rem）|
 | 移动端 375px 稿 | `50` |
-| 自定义 | 按实际换算关系填写 |
-
-#### 单位说明
-
-支持 `rem` / `px` / `vw` / `em` 四种单位，点击切换。
-
-- `px`：基数建议填 `1`，直接输出原始像素值
-- `rem`：配合移动端 flexible 方案使用，基数填根元素 font-size 对应的像素数
-- `vw`：基数填设计稿宽度，如 `750`
-- `em`：相对父元素字号，较少用于雪碧图
 
 ### 第三步：生成并导出
 
-点击「**生成 CSS**」按钮，工具自动解析并生成：
+点击「**生成代码**」按钮后：
 
-- **CSS 预览**：带语法高亮的代码预览
-- **图层列表**：每个图层的宽高和 background-position 值
-- 点击「**下载 CSS**」保存文件，文件名与 PSD 文件名一致
+- **代码预览**：带语法高亮，支持 CSS / SCSS / WXSS / JSON 格式切换
+- **图层编辑**：可勾选/取消图层、直接修改 CSS 类名、查看缩略图
+- 点击「**下载文件**」保存，文件名与 PSD 文件名一致
 
 ---
 
-## 输出格式
+## 输出格式示例
 
-生成的 CSS 格式如下：
+### CSS
 
 ```css
-/* 源文件: icons.psd  画布: 400×400px */
-/* 图层数: 12  基数: ÷100  单位: rem  生成: 2026/3/17 */
-
 .sprite-icon_home {
   width: 0.48rem;
   height: 0.48rem;
@@ -124,87 +105,86 @@ http://localhost:8765
   height: 0.48rem;
   background-position: -0.48rem 0;
 }
+```
 
-.sprite-icon_user {
-  width: 0.48rem;
-  height: 0.48rem;
-  background-position: -0.96rem 0;
+### SCSS
+
+```scss
+@mixin sprite($w, $h, $x, $y) {
+  width: $w;
+  height: $h;
+  background-position: $x $y;
+}
+
+.sprite-icon_home {
+  @include sprite(0.48rem, 0.48rem, 0, 0);
+}
+```
+
+### JSON
+
+```json
+{
+  "sprite-icon_home": {
+    "width": "0.48rem",
+    "height": "0.48rem",
+    "background-position": "0 0"
+  }
 }
 ```
 
 ### 在项目中使用
 
 ```css
-/* 在你的 CSS 中引入导出的文件 */
 @import './sprite-icons.css';
 
-/* 使用时指定背景图 */
 .icon {
   background-image: url('./sprite.png');
   background-repeat: no-repeat;
-  background-size: /* 根据实际尺寸填写 */;
   display: inline-block;
 }
 ```
 
 ```html
-<!-- HTML 中使用 -->
 <i class="icon sprite-icon_home"></i>
 <i class="icon sprite-icon_search"></i>
 ```
 
 ---
 
-## 注意事项
+## 功能特性
 
-1. **隐藏图层不导出**：PSD 中设为隐藏的图层会自动跳过
-2. **空图层不导出**：宽或高为 0 的图层自动跳过
-3. **类名特殊字符**：图层名中的特殊字符会自动转换为下划线 `_`，数字开头会加前缀 `_`
-4. **坐标为 0 时**：`background-position` 输出 `0` 而非 `0rem`，符合 CSS 规范
-5. **文件安全**：PSD 文件在本地浏览器内解析，不会上传到任何服务器
+- 支持 `.psd` / `.psb` 格式
+- 批量上传多个文件
+- 图层缩略图预览
+- 图层勾选 + CSS 类名直接编辑
+- 实时参数调整，预览即时刷新
+- 多格式导出：CSS / SCSS / WXSS / JSON
+- 复制单条或全部代码
+- localStorage 自动记忆上次配置
+- 纯前端解析，文件不上传任何服务器
 
 ---
 
-## 目录结构
+## 注意事项
 
-```
-.
-├── index.html          # 主页面
-├── package.json
-├── node_modules/
-│   └── ag-psd/         # PSD 解析库
-└── README.md           # 本文档
-```
+1. **隐藏图层不导出**：PSD 中隐藏的图层自动跳过
+2. **空图层不导出**：宽或高为 0 的图层自动跳过
+3. **类名特殊字符**：图层名中的特殊字符会被替换为 `_`，数字开头加前缀 `_`
+4. **坐标为 0 时**：输出 `0` 而非 `0rem`，符合 CSS 规范
+5. **隐私安全**：所有解析在本地浏览器完成，不上传服务器
 
 ---
 
 ## 依赖
 
-| 依赖 | 版本 | 说明 |
-|------|------|------|
-| [ag-psd](https://github.com/Agamnentzar/ag-psd) | latest | PSD 文件解析 |
+| 依赖 | 说明 |
+|------|------|
+| [ag-psd](https://github.com/Agamnentzar/ag-psd) | PSD 文件解析 |
+| [Vite](https://vite.dev) + [vite-plugin-singlefile](https://github.com/richardtallent/vite-plugin-singlefile) | 构建打包 |
 
 ---
 
-## 常见问题
+## 开源协议
 
-**Q：上传后提示「解析失败」**
-
-- 确认文件是标准 PSD 格式（非 PSB 大文件格式）
-- 尝试在 Photoshop 中另存为 PSD 后重新上传
-- 检查浏览器控制台（F12）查看详细错误信息
-
-**Q：导出的图层数量和预期不符**
-
-- 检查图层范围设置，默认「所有图层」会跳过隐藏图层
-- PSD 中被隐藏的图层不会导出
-
-**Q：类名出现乱码或 `_`**
-
-- 图层名包含空格、括号等特殊字符时会被替换为 `_`
-- 建议在 PSD 中将图层命名为英文字母 + 数字 + 下划线格式
-
-**Q：必须用 HTTP 服务器，能不能直接打开 HTML？**
-
-- 不能，浏览器安全策略禁止本地 HTML 加载本地 JS 模块
-- 最简单的方案是用 `python3 -m http.server 8765` 启动服务
+MIT License — 免费使用，可商用，无需授权。
