@@ -1,4 +1,4 @@
-import { sanitizeClassName } from './main.js'
+import { sanitizeClassName } from './utils.js'
 
 function toUnit(px, divisor, unit) {
   if (unit === 'px') return Math.round(px * 100) / 100 + 'px'
