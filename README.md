@@ -35,11 +35,15 @@ npm run dev
 
 浏览器访问 `http://localhost:5173`
 
-**4. 构建产出单文件**
+> **注意**：必须用 `npm run dev` 启动，不能用 `python3 -m http.server` 或直接双击打开 `index.html`。
+> 根目录的 `index.html` 使用了 ES 模块语法，浏览器无法直接解析裸模块路径（如 `ag-psd`），必须经过 Vite 处理。
+
+**4. 离线单文件版（无需服务器）**
 
 ```bash
 npm run build
-# 产出 dist/index.html，可离线使用，无需服务器
+# 产出 dist/index.html
+# 这个文件可以直接双击打开，或部署到任意静态服务器
 ```
 
 ---
