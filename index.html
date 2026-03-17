@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>PSD 图层坐标导出工具</title>
+  <title>PSD Sprite CSS Generator</title>
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -19,421 +19,226 @@
     }
 
     h1 {
-      font-size: 24px;
-      font-weight: 700;
+      font-size: 26px;
+      font-weight: 800;
       margin-bottom: 6px;
       background: linear-gradient(135deg, #667eea, #764ba2);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
     }
 
-    .subtitle {
-      font-size: 13px;
-      color: #718096;
-      margin-bottom: 36px;
-    }
+    .subtitle { font-size: 13px; color: #718096; margin-bottom: 36px; }
 
-    /* ── 步骤指示器 ── */
+    /* ── Steps ── */
     .steps {
       display: flex;
       align-items: center;
-      gap: 0;
-      margin-bottom: 32px;
       width: 100%;
-      max-width: 640px;
+      max-width: 720px;
+      margin-bottom: 28px;
     }
-
-    .step {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      flex: 1;
-    }
-
+    .step { display: flex; align-items: center; gap: 8px; flex: 1; }
     .step-num {
-      width: 28px;
-      height: 28px;
-      border-radius: 50%;
+      width: 28px; height: 28px; border-radius: 50%;
       border: 2px solid #2d3748;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 12px;
-      font-weight: 700;
-      color: #4a5568;
-      flex-shrink: 0;
-      transition: all 0.3s;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 700; color: #4a5568; flex-shrink: 0;
+      transition: all .3s;
     }
-
-    .step-label {
-      font-size: 12px;
-      color: #4a5568;
-      transition: color 0.3s;
-      white-space: nowrap;
-    }
-
-    .step-line {
-      flex: 1;
-      height: 2px;
-      background: #2d3748;
-      margin: 0 8px;
-      transition: background 0.3s;
-    }
-
-    .step.active .step-num {
-      border-color: #667eea;
-      background: #667eea22;
-      color: #667eea;
-    }
-
+    .step-label { font-size: 12px; color: #4a5568; transition: color .3s; white-space: nowrap; }
+    .step-line { flex: 1; height: 2px; background: #2d3748; margin: 0 8px; transition: background .3s; }
+    .step.active .step-num  { border-color: #667eea; background: #667eea22; color: #667eea; }
     .step.active .step-label { color: #667eea; }
-
-    .step.done .step-num {
-      border-color: #68d391;
-      background: #68d39122;
-      color: #68d391;
-    }
-
-    .step.done .step-label { color: #68d391; }
+    .step.done   .step-num  { border-color: #68d391; background: #68d39122; color: #68d391; }
+    .step.done   .step-label { color: #68d391; }
     .step.done + .step-line { background: #68d39166; }
 
-    /* ── 上传区 ── */
+    /* ── Drop Zone ── */
     .drop-zone {
-      width: 100%;
-      max-width: 640px;
-      border: 2px dashed #4a5568;
-      border-radius: 16px;
-      padding: 56px 20px;
-      text-align: center;
-      cursor: pointer;
-      transition: all 0.2s;
-      background: #1a1d27;
-      position: relative;
+      width: 100%; max-width: 720px;
+      border: 2px dashed #4a5568; border-radius: 16px;
+      padding: 56px 20px; text-align: center; cursor: pointer;
+      transition: all .2s; background: #1a1d27; position: relative;
     }
-
-    .drop-zone:hover, .drop-zone.drag-over {
-      border-color: #667eea;
-      background: #1e2035;
-    }
-
-    .drop-zone.has-file {
-      border-color: #68d391;
-      background: #1a2520;
-      padding: 28px 20px;
-    }
-
+    .drop-zone:hover, .drop-zone.drag-over { border-color: #667eea; background: #1e2035; }
+    .drop-zone.has-file { border-color: #68d391; background: #1a2520; padding: 24px; }
     .drop-zone input[type="file"] {
-      position: absolute;
-      inset: 0;
-      opacity: 0;
-      cursor: pointer;
-      width: 100%;
-      height: 100%;
+      position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
     }
-
     .drop-icon { font-size: 44px; margin-bottom: 12px; }
-
-    .drop-zone p { font-size: 15px; color: #a0aec0; }
+    .drop-zone > p { font-size: 15px; color: #a0aec0; }
     .drop-zone span { color: #667eea; font-weight: 600; }
     .drop-hint { font-size: 12px; color: #4a5568; margin-top: 6px; }
 
-    .file-info {
-      display: none;
-      align-items: center;
-      gap: 12px;
-      justify-content: center;
+    #fileInfo { display: none; }
+    .file-list { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+    .file-item {
+      display: flex; align-items: center; gap: 8px;
+      background: #0f1117; border: 1px solid #2d3748; border-radius: 8px; padding: 8px 12px;
     }
+    .file-item-icon { font-size: 20px; }
+    .file-item-name { font-size: 13px; font-weight: 600; color: #68d391; }
+    .file-item-size { font-size: 11px; color: #718096; }
+    .file-reselect { font-size: 12px; color: #4a5568; margin-top: 10px; text-decoration: underline; cursor: pointer; display: none; }
 
-    .file-info-icon { font-size: 32px; }
-
-    .file-info-name {
-      font-size: 15px;
-      font-weight: 600;
-      color: #68d391;
-    }
-
-    .file-info-size { font-size: 12px; color: #718096; margin-top: 2px; }
-
-    .file-reselect {
-      font-size: 12px;
-      color: #4a5568;
-      margin-top: 10px;
-      text-decoration: underline;
-      cursor: pointer;
-    }
-
-    /* ── 配置面板 ── */
+    /* ── Config Panel ── */
     .config-panel {
-      width: 100%;
-      max-width: 640px;
-      margin-top: 20px;
-      background: #1a1d27;
-      border-radius: 16px;
-      border: 1px solid #2d3748;
-      padding: 24px;
-      display: none;
-      flex-direction: column;
-      gap: 20px;
+      width: 100%; max-width: 720px; margin-top: 20px;
+      background: #1a1d27; border-radius: 16px; border: 1px solid #2d3748;
+      padding: 24px; display: none; flex-direction: column; gap: 20px;
     }
-
     .config-panel.visible { display: flex; }
-
-    .config-title {
-      font-size: 13px;
-      font-weight: 600;
-      color: #718096;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      margin-bottom: 4px;
+    .config-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .field { display: flex; flex-direction: column; gap: 7px; }
+    .field label { font-size: 12px; color: #718096; font-weight: 500; }
+    .field select, .field input[type="text"], .field input[type="number"] {
+      background: #0f1117; border: 1px solid #2d3748; border-radius: 8px;
+      color: #e2e8f0; padding: 9px 12px; font-size: 13px; outline: none;
+      transition: border-color .2s; width: 100%;
     }
+    .field select:focus, .field input:focus { border-color: #667eea; }
 
-    .config-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 16px;
-    }
-
-    .field {
-      display: flex;
-      flex-direction: column;
-      gap: 7px;
-    }
-
-    .field label {
-      font-size: 12px;
-      color: #718096;
-      font-weight: 500;
-    }
-
-    .field select,
-    .field input[type="text"],
-    .field input[type="number"] {
-      background: #0f1117;
-      border: 1px solid #2d3748;
-      border-radius: 8px;
-      color: #e2e8f0;
-      padding: 9px 12px;
-      font-size: 13px;
-      outline: none;
-      transition: border-color 0.2s;
-      width: 100%;
-    }
-
-    .field select:focus,
-    .field input:focus {
-      border-color: #667eea;
-    }
-
-    /* 单位选择器 */
-    .unit-selector {
-      display: flex;
-      gap: 6px;
-    }
-
+    .unit-selector { display: flex; gap: 6px; }
     .unit-btn {
-      flex: 1;
-      padding: 9px 0;
-      background: #0f1117;
-      border: 1px solid #2d3748;
-      border-radius: 8px;
-      color: #718096;
-      font-size: 13px;
-      cursor: pointer;
-      transition: all 0.2s;
-      text-align: center;
+      flex: 1; padding: 9px 0; background: #0f1117;
+      border: 1px solid #2d3748; border-radius: 8px;
+      color: #718096; font-size: 13px; cursor: pointer;
+      transition: all .2s; text-align: center;
     }
+    .unit-btn.active { background: #667eea22; border-color: #667eea; color: #667eea; font-weight: 600; }
 
-    .unit-btn.active {
-      background: #667eea22;
-      border-color: #667eea;
-      color: #667eea;
-      font-weight: 600;
-    }
-
-    /* 生成按钮 */
     .btn-generate {
-      width: 100%;
-      background: linear-gradient(135deg, #667eea, #764ba2);
-      color: #fff;
-      border: none;
-      border-radius: 10px;
-      padding: 14px;
-      font-size: 15px;
-      font-weight: 700;
-      cursor: pointer;
-      transition: opacity 0.2s, transform 0.1s;
-      letter-spacing: 0.03em;
+      width: 100%; background: linear-gradient(135deg, #667eea, #764ba2);
+      color: #fff; border: none; border-radius: 10px;
+      padding: 14px; font-size: 15px; font-weight: 700; cursor: pointer;
+      transition: opacity .2s, transform .1s; letter-spacing: .03em;
     }
+    .btn-generate:hover { opacity: .9; }
+    .btn-generate:active { transform: scale(.98); }
+    .btn-generate:disabled { opacity: .4; cursor: not-allowed; }
 
-    .btn-generate:hover { opacity: 0.9; }
-    .btn-generate:active { transform: scale(0.98); }
-    .btn-generate:disabled { opacity: 0.4; cursor: not-allowed; }
+    /* ── Progress ── */
+    .progress-area { width: 100%; max-width: 720px; margin-top: 20px; display: none; }
+    .progress-bar-wrap { background: #1a1d27; border-radius: 99px; height: 6px; overflow: hidden; }
+    .progress-bar { height: 100%; width: 0%; background: linear-gradient(90deg,#667eea,#764ba2); border-radius: 99px; transition: width .3s; }
+    .progress-text { font-size: 13px; color: #718096; margin-top: 8px; text-align: center; }
 
-    /* ── 进度 ── */
-    .progress-area {
-      width: 100%;
-      max-width: 640px;
-      margin-top: 20px;
-      display: none;
-    }
-
-    .progress-bar-wrap {
-      background: #1a1d27;
-      border-radius: 99px;
-      height: 6px;
-      overflow: hidden;
-    }
-
-    .progress-bar {
-      height: 100%;
-      width: 0%;
-      background: linear-gradient(90deg, #667eea, #764ba2);
-      border-radius: 99px;
-      transition: width 0.3s;
-    }
-
-    .progress-text {
-      font-size: 13px;
-      color: #718096;
-      margin-top: 8px;
-      text-align: center;
-    }
-
-    /* ── 错误 ── */
+    /* ── Error ── */
     .error-msg {
-      width: 100%;
-      max-width: 640px;
-      background: #2d1515;
-      border: 1px solid #742a2a;
-      border-radius: 10px;
-      padding: 14px 18px;
-      color: #fc8181;
-      font-size: 13px;
-      margin-top: 16px;
-      display: none;
+      width: 100%; max-width: 720px;
+      background: #2d1515; border: 1px solid #742a2a; border-radius: 10px;
+      padding: 14px 18px; color: #fc8181; font-size: 13px; margin-top: 16px; display: none;
     }
 
-    /* ── 结果 ── */
-    .result-area {
-      width: 100%;
-      max-width: 640px;
-      margin-top: 24px;
-      display: none;
-    }
-
+    /* ── Result ── */
+    .result-area { width: 100%; max-width: 720px; margin-top: 24px; display: none; }
     .result-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 14px;
+      display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;
     }
-
     .result-header h2 { font-size: 15px; font-weight: 600; }
     .result-meta { font-size: 12px; color: #718096; margin-top: 2px; }
-
     .result-actions { display: flex; gap: 8px; }
 
     .btn-download {
       background: linear-gradient(135deg, #667eea, #764ba2);
-      color: #fff;
-      border: none;
-      border-radius: 8px;
-      padding: 9px 18px;
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: opacity 0.2s;
+      color: #fff; border: none; border-radius: 8px;
+      padding: 9px 18px; font-size: 13px; font-weight: 600; cursor: pointer; transition: opacity .2s;
     }
+    .btn-download:hover { opacity: .85; }
 
-    .btn-download:hover { opacity: 0.85; }
-
-    .btn-reset {
-      background: #1a1d27;
-      color: #718096;
-      border: 1px solid #2d3748;
-      border-radius: 8px;
-      padding: 9px 14px;
-      font-size: 13px;
-      cursor: pointer;
-      transition: all 0.2s;
+    .btn-secondary {
+      background: #1a1d27; color: #718096;
+      border: 1px solid #2d3748; border-radius: 8px;
+      padding: 9px 14px; font-size: 13px; cursor: pointer; transition: all .2s;
     }
-
-    .btn-reset:hover { border-color: #4a5568; color: #a0aec0; }
+    .btn-secondary:hover { border-color: #4a5568; color: #a0aec0; }
 
     /* Tabs */
-    .tabs { display: flex; gap: 4px; margin-bottom: 12px; }
-
+    .tabs { display: flex; gap: 4px; margin-bottom: 12px; flex-wrap: wrap; }
     .tab-btn {
-      background: #1a1d27;
-      border: 1px solid #2d3748;
-      border-radius: 8px;
-      color: #718096;
-      padding: 6px 14px;
-      font-size: 13px;
-      cursor: pointer;
-      transition: all 0.2s;
+      background: #1a1d27; border: 1px solid #2d3748; border-radius: 8px;
+      color: #718096; padding: 6px 14px; font-size: 13px; cursor: pointer; transition: all .2s;
     }
-
-    .tab-btn.active {
-      background: #667eea22;
-      border-color: #667eea;
-      color: #667eea;
-    }
-
+    .tab-btn.active { background: #667eea22; border-color: #667eea; color: #667eea; }
     .tab-panel { display: none; }
     .tab-panel.active { display: block; }
 
-    .css-preview {
-      background: #1a1d27;
-      border: 1px solid #2d3748;
-      border-radius: 12px;
-      padding: 20px;
-      font-family: "JetBrains Mono", "Fira Code", "Courier New", monospace;
-      font-size: 12px;
-      line-height: 1.8;
-      color: #a0aec0;
-      max-height: 420px;
-      overflow-y: auto;
-      white-space: pre;
+    /* 格式选择 */
+    .format-bar {
+      display: flex; gap: 6px; margin-bottom: 10px;
     }
-
-    /* Layer list */
-    .layer-list {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
+    .fmt-btn {
+      padding: 5px 14px; background: #0f1117;
+      border: 1px solid #2d3748; border-radius: 6px;
+      color: #718096; font-size: 12px; cursor: pointer; transition: all .2s;
     }
+    .fmt-btn.active { background: #667eea22; border-color: #667eea; color: #667eea; font-weight: 600; }
 
-    .layer-item {
-      background: #1a1d27;
-      border: 1px solid #2d3748;
-      border-radius: 10px;
-      padding: 11px 16px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      font-size: 12px;
+    /* 代码预览 */
+    .code-wrap {
+      position: relative;
     }
-
-    .layer-name {
-      flex: 1;
-      color: #68d391;
-      font-family: monospace;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
+    .code-preview {
+      background: #1a1d27; border: 1px solid #2d3748; border-radius: 12px;
+      padding: 20px; font-family: "JetBrains Mono","Fira Code","Courier New",monospace;
+      font-size: 12px; line-height: 1.8; color: #a0aec0;
+      max-height: 400px; overflow-y: auto; white-space: pre;
     }
-
-    .layer-values {
-      display: flex;
-      gap: 10px;
-      color: #a0aec0;
-      font-family: monospace;
-      flex-shrink: 0;
+    .btn-copy-all {
+      position: absolute; top: 10px; right: 10px;
+      background: #2d3748; color: #a0aec0;
+      border: none; border-radius: 6px; padding: 4px 10px;
+      font-size: 11px; cursor: pointer; transition: all .2s;
     }
+    .btn-copy-all:hover { background: #4a5568; color: #e2e8f0; }
 
-    .layer-values span { display: flex; gap: 3px; }
-    .layer-values b { color: #4a5568; font-weight: 400; }
+    /* 高亮 */
+    .hl-comment { color: #4a5568; }
+    .hl-at      { color: #b794f4; }
+    .hl-sel     { color: #68d391; }
+    .hl-prop    { color: #63b3ed; }
+    .hl-val     { color: #f6ad55; }
+    .hl-bool    { color: #fc8181; }
+    .hl-null    { color: #718096; }
+    .hl-num     { color: #f6ad55; }
+
+    /* 图层编辑表格 */
+    .table-header {
+      display: grid;
+      grid-template-columns: 32px 1fr 1fr 52px 80px;
+      gap: 8px; align-items: center;
+      padding: 8px 12px;
+      background: #0f1117; border-radius: 8px 8px 0 0;
+      border: 1px solid #2d3748; border-bottom: none;
+      font-size: 11px; color: #4a5568; font-weight: 600; text-transform: uppercase;
+    }
+    .check-all-wrap { display: flex; align-items: center; gap: 4px; cursor: pointer; }
+    .table-body {
+      border: 1px solid #2d3748; border-radius: 0 0 10px 10px;
+      max-height: 380px; overflow-y: auto;
+    }
+    .table-row {
+      display: grid;
+      grid-template-columns: 32px 1fr 1fr 52px 80px;
+      gap: 8px; align-items: center;
+      padding: 8px 12px;
+      border-bottom: 1px solid #1a1d27;
+      background: #13151f;
+      transition: background .15s;
+    }
+    .table-row:last-child { border-bottom: none; border-radius: 0 0 10px 10px; }
+    .table-row:hover { background: #1a1d27; }
+    .row-origname { font-size: 12px; color: #a0aec0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .row-classname {
+      background: #0f1117; border: 1px solid #2d3748; border-radius: 6px;
+      color: #68d391; font-family: monospace; font-size: 12px;
+      padding: 4px 8px; outline: none; width: 100%;
+    }
+    .row-classname:focus { border-color: #667eea; }
+    .row-thumb { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; }
+    .row-thumb img { max-width: 40px; max-height: 40px; border-radius: 4px; border: 1px solid #2d3748; }
+    .no-thumb { font-size: 11px; color: #2d3748; }
+    .row-size { font-size: 11px; color: #718096; font-family: monospace; }
 
     ::-webkit-scrollbar { width: 6px; }
     ::-webkit-scrollbar-track { background: transparent; }
@@ -442,10 +247,10 @@
 </head>
 <body>
 
-  <h1>PSD 图层坐标导出</h1>
-  <p class="subtitle">上传 PSD，配置参数，一键生成雪碧图 CSS</p>
+  <h1>PSD Sprite CSS Generator</h1>
+  <p class="subtitle">上传 PSD / PSB，配置参数，生成雪碧图 CSS / SCSS / WXSS / JSON</p>
 
-  <!-- 步骤指示器 -->
+  <!-- Steps -->
   <div class="steps">
     <div class="step active" id="step1">
       <div class="step-num">1</div>
@@ -459,34 +264,26 @@
     <div class="step-line" id="line2"></div>
     <div class="step" id="step3">
       <div class="step-num">3</div>
-      <div class="step-label">导出 CSS</div>
+      <div class="step-label">导出代码</div>
     </div>
   </div>
 
   <!-- Step 1: 上传 -->
   <div class="drop-zone" id="dropZone">
-    <input type="file" id="fileInput" accept=".psd" />
+    <input type="file" id="fileInput" accept=".psd,.psb" multiple />
     <div id="dropDefault">
       <div class="drop-icon">📂</div>
-      <p>拖拽 PSD 文件到此处，或<span>点击选择</span></p>
-      <p class="drop-hint">仅支持 .psd 格式</p>
+      <p>拖拽 PSD / PSB 文件到此处，或<span>点击选择</span></p>
+      <p class="drop-hint">支持 .psd .psb，可同时上传多个文件</p>
     </div>
-    <div class="file-info" id="fileInfo">
-      <div class="file-info-icon">📄</div>
-      <div>
-        <div class="file-info-name" id="fileName"></div>
-        <div class="file-info-size" id="fileSize"></div>
-      </div>
+    <div id="fileInfo">
+      <div class="file-list" id="fileList"></div>
     </div>
-    <p class="file-reselect" id="reselect" style="display:none">重新选择文件</p>
+    <p class="file-reselect" id="reselect">重新选择文件</p>
   </div>
 
-  <!-- Step 2: 配置面板 -->
+  <!-- Step 2: 配置 -->
   <div class="config-panel" id="configPanel">
-    <div>
-      <div class="config-title">导出参数</div>
-    </div>
-
     <div class="config-grid">
       <div class="field">
         <label>图层范围</label>
@@ -496,17 +293,14 @@
           <option value="top">仅顶层图层</option>
         </select>
       </div>
-
       <div class="field">
         <label>CSS 类名前缀</label>
-        <input type="text" id="prefix" value="sprite-" placeholder="sprite-" />
+        <input type="text" id="prefix" value="sprite-" />
       </div>
-
       <div class="field">
         <label>除数基数</label>
         <input type="number" id="divisor" value="100" min="1" step="1" />
       </div>
-
       <div class="field">
         <label>单位</label>
         <div class="unit-selector">
@@ -517,19 +311,16 @@
         </div>
       </div>
     </div>
-
-    <button class="btn-generate" id="btnGenerate">生成 CSS</button>
+    <button class="btn-generate" id="btnGenerate">生成代码</button>
   </div>
 
-  <!-- 进度 -->
+  <!-- Progress -->
   <div class="progress-area" id="progressArea">
-    <div class="progress-bar-wrap">
-      <div class="progress-bar" id="progressBar"></div>
-    </div>
+    <div class="progress-bar-wrap"><div class="progress-bar" id="progressBar"></div></div>
     <p class="progress-text" id="progressText">正在解析...</p>
   </div>
 
-  <!-- 错误 -->
+  <!-- Error -->
   <div class="error-msg" id="errorMsg"></div>
 
   <!-- Step 3: 结果 -->
@@ -540,306 +331,36 @@
         <p class="result-meta" id="resultMeta"></p>
       </div>
       <div class="result-actions">
-        <button class="btn-reset" id="btnReset">重新配置</button>
-        <button class="btn-download" id="btnDownload">下载 CSS</button>
+        <button class="btn-secondary" id="btnReset">重新配置</button>
+        <button class="btn-download" id="btnDownload">下载文件</button>
       </div>
     </div>
 
     <div class="tabs">
-      <button class="tab-btn active" data-tab="preview">CSS 预览</button>
-      <button class="tab-btn" data-tab="layers">图层列表</button>
+      <button class="tab-btn active" data-tab="preview">代码预览</button>
+      <button class="tab-btn" data-tab="layers">图层编辑</button>
     </div>
 
+    <!-- 代码预览 Tab -->
     <div class="tab-panel active" id="tab-preview">
-      <div class="css-preview" id="cssPreview"></div>
+      <div class="format-bar">
+        <div class="fmt-btn active" data-fmt="css">CSS</div>
+        <div class="fmt-btn" data-fmt="scss">SCSS</div>
+        <div class="fmt-btn" data-fmt="wxss">WXSS</div>
+        <div class="fmt-btn" data-fmt="json">JSON</div>
+      </div>
+      <div class="code-wrap">
+        <button class="btn-copy-all" id="btnCopyAll">复制全部</button>
+        <div class="code-preview" id="codePreview"></div>
+      </div>
     </div>
 
+    <!-- 图层编辑 Tab -->
     <div class="tab-panel" id="tab-layers">
-      <div class="layer-list" id="layerList"></div>
+      <div id="layerTable"></div>
     </div>
   </div>
 
-  <script src="./node_modules/ag-psd/dist/bundle.js"></script>
-  <script>
-    // ── DOM refs ──
-    const dropZone      = document.getElementById('dropZone');
-    const fileInput     = document.getElementById('fileInput');
-    const dropDefault   = document.getElementById('dropDefault');
-    const fileInfoEl    = document.getElementById('fileInfo');
-    const fileNameEl    = document.getElementById('fileName');
-    const fileSizeEl    = document.getElementById('fileSize');
-    const reselectEl    = document.getElementById('reselect');
-    const configPanel   = document.getElementById('configPanel');
-    const btnGenerate   = document.getElementById('btnGenerate');
-    const progressArea  = document.getElementById('progressArea');
-    const progressBar   = document.getElementById('progressBar');
-    const progressText  = document.getElementById('progressText');
-    const resultArea    = document.getElementById('resultArea');
-    const cssPreview    = document.getElementById('cssPreview');
-    const layerList     = document.getElementById('layerList');
-    const resultMeta    = document.getElementById('resultMeta');
-    const btnDownload   = document.getElementById('btnDownload');
-    const btnReset      = document.getElementById('btnReset');
-    const errorMsg      = document.getElementById('errorMsg');
-
-    let currentFile   = null;
-    let generatedCSS  = '';
-    let selectedUnit  = 'rem';
-
-    // ── 步骤管理 ──
-    function setStep(n) {
-      for (let i = 1; i <= 3; i++) {
-        const el = document.getElementById('step' + i);
-        el.classList.remove('active', 'done');
-        if (i < n) el.classList.add('done');
-        else if (i === n) el.classList.add('active');
-      }
-    }
-
-    // ── 单位选择 ──
-    document.querySelectorAll('.unit-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        document.querySelectorAll('.unit-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        selectedUnit = btn.dataset.unit;
-      });
-    });
-
-    // ── Tabs ──
-    document.querySelectorAll('.tab-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-        btn.classList.add('active');
-        document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
-      });
-    });
-
-    // ── 拖拽上传 ──
-    dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
-    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
-    dropZone.addEventListener('drop', e => {
-      e.preventDefault();
-      dropZone.classList.remove('drag-over');
-      const f = e.dataTransfer.files[0];
-      if (f) loadFile(f);
-    });
-    fileInput.addEventListener('change', e => {
-      if (e.target.files[0]) loadFile(e.target.files[0]);
-    });
-
-    // 重新选择（点击重选文字，不触发 file input 全区域）
-    reselectEl.addEventListener('click', e => {
-      e.stopPropagation();
-      fileInput.value = '';
-      fileInput.click();
-    });
-
-    function formatSize(bytes) {
-      if (bytes < 1024) return bytes + ' B';
-      if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
-      return (bytes / 1024 / 1024).toFixed(2) + ' MB';
-    }
-
-    function loadFile(file) {
-      if (!file.name.toLowerCase().endsWith('.psd')) {
-        showError('请上传 .psd 格式的文件');
-        return;
-      }
-      currentFile = file;
-      errorMsg.style.display = 'none';
-      resultArea.style.display = 'none';
-
-      // 更新上传区显示
-      dropDefault.style.display = 'none';
-      fileInfoEl.style.display = 'flex';
-      reselectEl.style.display = 'block';
-      fileNameEl.textContent = file.name;
-      fileSizeEl.textContent = formatSize(file.size);
-      dropZone.classList.add('has-file');
-      // 禁止点击文件区再次弹窗（点重选才能换）
-      fileInput.style.pointerEvents = 'none';
-
-      // 显示配置面板
-      configPanel.classList.add('visible');
-      setStep(2);
-    }
-
-    // ── 生成按钮 ──
-    btnGenerate.addEventListener('click', () => {
-      if (!currentFile) return;
-      generateCSS(currentFile);
-    });
-
-    // ── 重新配置 ──
-    btnReset.addEventListener('click', () => {
-      resultArea.style.display = 'none';
-      configPanel.classList.add('visible');
-      setStep(2);
-    });
-
-    // ── 下载 ──
-    btnDownload.addEventListener('click', () => {
-      if (!generatedCSS) return;
-      const blob = new Blob([generatedCSS], { type: 'text/css' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = (currentFile ? currentFile.name.replace(/\.psd$/i, '') : 'sprite') + '.css';
-      a.click();
-      URL.revokeObjectURL(url);
-    });
-
-    // ── 工具函数 ──
-    function showProgress(pct, text) {
-      progressArea.style.display = 'block';
-      progressBar.style.width = pct + '%';
-      progressText.textContent = text;
-    }
-
-    function showError(msg) {
-      errorMsg.textContent = msg;
-      errorMsg.style.display = 'block';
-      progressArea.style.display = 'none';
-      btnGenerate.disabled = false;
-    }
-
-    function sanitizeClassName(name) {
-      return name
-        .replace(/[^\w\u4e00-\u9fa5-]/g, '_')
-        .replace(/^(\d)/, '_$1')
-        .toLowerCase();
-    }
-
-    function toUnit(px, divisor, unit) {
-      if (unit === 'px') return px.toFixed(2).replace(/\.00$/, '') + 'px';
-      const val = (px / divisor).toFixed(2);
-      return val + unit;
-    }
-
-    function formatBP(raw, divisor, unit) {
-      return raw === 0 ? '0' : `-${toUnit(raw, divisor, unit)}`;
-    }
-
-    // ── 核心：生成 CSS ──
-    async function generateCSS(file) {
-      errorMsg.style.display = 'none';
-      configPanel.classList.remove('visible');
-      resultArea.style.display = 'none';
-      btnGenerate.disabled = true;
-      showProgress(10, '读取文件...');
-
-      try {
-        const buffer = await file.arrayBuffer();
-        showProgress(40, '解析 PSD 结构...');
-
-        const psd = agPsd.readPsd(buffer, { skipLayerImageData: true, skipCompositeImageData: true });
-        showProgress(70, '提取图层信息...');
-
-        const layerMode = document.getElementById('layerMode').value;
-        const divisor   = parseFloat(document.getElementById('divisor').value) || 100;
-        const prefix    = document.getElementById('prefix').value;
-        const unit      = selectedUnit;
-
-        const layers = [];
-        collectLayers(psd.children || [], layers, layerMode);
-        showProgress(90, '生成 CSS...');
-
-        const cssLines  = [];
-        const listItems = [];
-
-        cssLines.push(`/* 源文件: ${file.name}  画布: ${psd.width}×${psd.height}px */`);
-        cssLines.push(`/* 图层数: ${layers.length}  基数: ÷${divisor}  单位: ${unit}  生成: ${new Date().toLocaleString('zh-CN')} */`);
-        cssLines.push('');
-
-        layers.forEach(layer => {
-          const cls = sanitizeClassName(prefix + layer.name);
-          const w   = toUnit(layer.w, divisor, unit);
-          const h   = toUnit(layer.h, divisor, unit);
-          const bpx = formatBP(layer.x, divisor, unit);
-          const bpy = formatBP(layer.y, divisor, unit);
-
-          cssLines.push(`.${cls} {`);
-          cssLines.push(`  width: ${w};`);
-          cssLines.push(`  height: ${h};`);
-          cssLines.push(`  background-position: ${bpx} ${bpy};`);
-          cssLines.push(`}`);
-          cssLines.push('');
-
-          listItems.push({ name: layer.name, cls, w, h, bpx, bpy });
-        });
-
-        generatedCSS = cssLines.join('\n');
-
-        cssPreview.innerHTML = syntaxHighlight(generatedCSS);
-
-        layerList.innerHTML = listItems.map(l => `
-          <div class="layer-item">
-            <div class="layer-name">.${escapeHtml(l.cls)}</div>
-            <div class="layer-values">
-              <span><b>w&nbsp;</b>${l.w}</span>
-              <span><b>h&nbsp;</b>${l.h}</span>
-              <span><b>bg-pos&nbsp;</b>${l.bpx} ${l.bpy}</span>
-            </div>
-          </div>
-        `).join('');
-
-        resultMeta.textContent = `共 ${layers.length} 个图层 · 画布 ${psd.width}×${psd.height}px · ÷${divisor} · ${unit}`;
-
-        showProgress(100, '完成');
-        setTimeout(() => {
-          progressArea.style.display = 'none';
-          resultArea.style.display = 'block';
-          btnGenerate.disabled = false;
-          setStep(3);
-        }, 300);
-
-      } catch (err) {
-        console.error(err);
-        showError('解析失败：' + err.message);
-        configPanel.classList.add('visible');
-        setStep(2);
-      }
-    }
-
-    // ── 收集图层 ──
-    function collectLayers(children, result, mode) {
-      if (!children) return;
-      children.forEach(layer => {
-        if (layer.hidden) return;
-        if (layer.children) {
-          if (mode !== 'top') collectLayers(layer.children, result, mode);
-          return;
-        }
-        const top    = layer.top    || 0;
-        const left   = layer.left   || 0;
-        const bottom = layer.bottom || 0;
-        const right  = layer.right  || 0;
-        const w = right - left;
-        const h = bottom - top;
-        if (w <= 0 || h <= 0) return;
-        result.push({ name: layer.name || 'layer', x: left, y: top, w, h });
-      });
-    }
-
-    // ── 语法高亮 ──
-    function escapeHtml(s) {
-      return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-    }
-
-    function syntaxHighlight(css) {
-      return css.split('\n').map(line => {
-        const e = escapeHtml(line);
-        if (/^\s*\/\*/.test(line))
-          return `<span style="color:#4a5568">${e}</span>`;
-        if (/^\s*\.[^\{]+\{/.test(line))
-          return e.replace(/^(\s*)(\.[^\{]+)(\{)/, '$1<span style="color:#68d391">$2</span>$3');
-        if (/^\s*[\w-]+\s*:/.test(line))
-          return e.replace(/^(\s*)([\w-]+)(\s*:\s*)(.+)$/, (_, indent, prop, colon, val) =>
-            `${indent}<span style="color:#63b3ed">${prop}</span>${colon}<span style="color:#f6ad55">${val}</span>`);
-        return e;
-      }).join('\n');
-    }
-  </script>
+  <script type="module" src="/src/main.js"></script>
 </body>
 </html>
